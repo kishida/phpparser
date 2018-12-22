@@ -7,11 +7,11 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 public class PHPParserTest {
-    private static String SAMPLE = 
+    private final static String SAMPLE = 
             //"        <?php\n" +
             "        function fib($n) {\n" +
-            "            if ($n < 1) {\n" +
-            "                return 0;\n" +
+            "            if ($n < 2) {\n" +
+            "                return $n;\n" +
             "            }\n" +
             "            return fib($n - 1) + fib($n - 2);\n" +
             "        }\n" +
@@ -23,33 +23,31 @@ public class PHPParserTest {
 
     @Test
     public void testScript() {
-        var parser = parser(PHPParser.script());
-        var asts = parser.parse(SAMPLE);
+        Parser<List<PHPParser.AST>> parser = parser(PHPParser.script());
+        List<PHPParser.AST> asts = parser.parse(SAMPLE);
         assertThat(asts.size(), is(2));
     }
     
     public void test() {
-
-        
-        var intParser= PHPParser.integer().from(PHPParser.tokenizer, PHPParser.ignored);
+        Parser<PHPParser.IntValue> intParser= PHPParser.integer().from(PHPParser.tokenizer, PHPParser.ignored);
         System.out.println(intParser.parse("123"));
         
-        var identifier = PHPParser.identifier().from(PHPParser.tokenizer, PHPParser.ignored);
+        Parser<String> identifier = PHPParser.identifier().from(PHPParser.tokenizer, PHPParser.ignored);
         System.out.println(identifier.parse("abc"));
         
-        var parser = PHPParser.variable().from(PHPParser.tokenizer, PHPParser.ignored);
+        Parser<PHPParser.ASTVariable> parser = PHPParser.variable().from(PHPParser.tokenizer, PHPParser.ignored);
         System.out.println(parser.parse("$hoge"));
         
-        var valueParser = PHPParser.value().from(PHPParser.tokenizer, PHPParser.ignored);
+        Parser<PHPParser.ASTExp> valueParser = PHPParser.value().from(PHPParser.tokenizer, PHPParser.ignored);
         System.out.println(valueParser.parse("$hoge"));
         System.out.println(valueParser.parse("123"));
         
-        var op = PHPParser.operator().from(PHPParser.tokenizer, PHPParser.ignored);
+        Parser<PHPParser.ASTExp> op = PHPParser.operator().from(PHPParser.tokenizer, PHPParser.ignored);
         System.out.println(op.parse("12+3"));
         System.out.println(op.parse("12+$a"));
         System.out.println(op.parse("$ab+123"));
         
-        var comm = parser(PHPParser.command());
+        Parser<PHPParser.ASTCommand> comm = parser(PHPParser.command());
         System.out.println(comm.parse("echo 123"));
         System.out.println(comm.parse("echo 123<3"));
         System.out.println(comm.parse("echo 23+3"));
@@ -58,27 +56,27 @@ public class PHPParserTest {
         System.out.println(comm.parse("echo fib(12)"));
         System.out.println(comm.parse("return fib($n - 1) + fib($n - 2)"));
         
-        var ident = PHPParser.identifier().from(PHPParser.tokenizer, PHPParser.ignored);
+        Parser<String> ident = PHPParser.identifier().from(PHPParser.tokenizer, PHPParser.ignored);
         System.out.println(ident.parse("f"));
         
-        var assignment = parser(PHPParser.assignment());
+        Parser<PHPParser.ASTAssignment> assignment = parser(PHPParser.assignment());
         System.out.println(assignment.parse("$a=123"));
         
-        var func = PHPParser.funcCall().from(PHPParser.tokenizer, PHPParser.ignored);
+        Parser<PHPParser.ASTFuncCall> func = PHPParser.funcCall().from(PHPParser.tokenizer, PHPParser.ignored);
         System.out.println(func.parse("f(12)"));
 
-        var statement = parser(PHPParser.statement());
+        Parser<PHPParser.AST> statement = parser(PHPParser.statement());
         System.out.println(statement.parse("$a;"));
         System.out.println(statement.parse("$a=$a+1;"));
         
-        var ifs = parser(PHPParser.ifStatement());
+        Parser<PHPParser.ASTIf> ifs = parser(PHPParser.ifStatement());
         System.out.println(ifs.parse("if ($a < 3) echo $a;"));
         System.out.println(ifs.parse("if ($a < 3){ func();echo $a;}"));
         
-        var fun = parser(PHPParser.function());
+        Parser<PHPParser.ASTFunction> fun = parser(PHPParser.function());
         System.out.println(fun.parse("function fib($a) { return $a + 1; }"));
         
-        var scriptParser = parser(PHPParser.script());
+        Parser<List<PHPParser.AST>> scriptParser = parser(PHPParser.script());
         final List<PHPParser.AST> script = scriptParser.parse(SAMPLE);
         System.out.println(script);        
     }
