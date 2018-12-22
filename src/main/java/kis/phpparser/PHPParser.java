@@ -1,13 +1,11 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package kis.phpparser;
 
+import java.util.Arrays;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import lombok.Value;
 import org.jparsec.*;
 import org.jparsec.pattern.CharPredicates;
 import org.jparsec.pattern.Pattern;
@@ -19,25 +17,41 @@ import org.jparsec.pattern.Patterns;
  */
 public class PHPParser {
     static String[] operators = {
-            "<", ">", "+", "-", "(", ")", ";", "="};
+            "<", ">", "+", "-", "(", ")", ";", "=", ",", "{", "}", "="};
     static String[] keywords = {
-            "function", "return", "echo"};
+            "function", "return", "echo", "if"};
     static Terminals terms = Terminals.operators(operators).words(Scanners.IDENTIFIER).keywords(keywords).build();
     static Parser<Void> ignored = Scanners.WHITESPACES.optional();
-    static Pattern varToken = Patterns.isChar('$').next(Patterns.isChar(CharPredicates.IS_ALPHA)).many1();
+    static Pattern varToken = Patterns.isChar('$').next(Patterns.isChar(CharPredicates.IS_ALPHA).many1());
 
     static Parser<String> varParser = varToken.toScanner("variable").source();
 
+    enum PHPTag {
+        VARIABLE;
+    }
+    
+    public static final Parser<Tokens.Fragment> VAR_TOKENIZER =
+        varParser.map(text -> Tokens.fragment(text, PHPTag.VARIABLE));    
+
+    public static final Parser<String> VAR_PARSER = Parsers.token(t -> {
+        Object val = t.value();
+        if (val instanceof Tokens.Fragment) {
+            Tokens.Fragment c = (Tokens.Fragment) val;
+            return PHPTag.VARIABLE.equals(c.tag()) ? c.text() : null;
+        }
+        return null;
+    });
+
     static Parser<?> tokenizer = Parsers.or(
             terms.tokenizer(),
-            varParser,
-            Terminals.Identifier.TOKENIZER,
-            Terminals.IntegerLiteral.TOKENIZER);
+            VAR_TOKENIZER,
+            Terminals.IntegerLiteral.TOKENIZER,
+            Terminals.Identifier.TOKENIZER);
 
     interface AST{}
     interface ASTExp extends AST{}
 
-    @AllArgsConstructor @EqualsAndHashCode
+    @Value
     public static class IntValue implements ASTExp {
         int value;
 
@@ -51,20 +65,20 @@ public class PHPParser {
         return Terminals.IntegerLiteral.PARSER.map(s -> new IntValue(Integer.parseInt(s)));
     }
 
-    @AllArgsConstructor @EqualsAndHashCode
+    @Value
     public static class ASTVariable implements ASTExp {
         String name;
     }
 
     public static Parser<ASTVariable> variable() {
-        return varParser.map(v -> new ASTVariable(v.substring(1)));
+        return VAR_PARSER.map(var -> new ASTVariable(var.substring(1)));
     }
 
     public static Parser<ASTExp> value() {
-        return Parsers.or(integer(), variable());
+        return Parsers.or(integer(), assignment(), variable(), funcCall());
     }
 
-    @AllArgsConstructor @ToString
+    @Value
     public static class ASTBinaryOp implements ASTExp {
         ASTExp left;
         ASTExp right;
@@ -83,14 +97,82 @@ public class PHPParser {
                 terms.token("<", ">").source()
                      .next(op -> operator().map(r -> (ASTExp)new ASTBinaryOp(l, r, op))).optional(l));
     }
-
-    @AllArgsConstructor @ToString
+    public static Parser<ASTExp> expression() {
+        return bicond();
+    }
+    @Value
     public static class ASTCommand implements AST {
         String command;
         ASTExp param;
     }
     public static Parser<ASTCommand> command() {
         return terms.token("return").or(terms.token("echo"))
-                .next(t -> bicond().map(exp -> new ASTCommand(t.toString(), exp)));
+                .next(t -> expression().map(exp -> new ASTCommand(t.toString(), exp)));
+    }
+    
+    @Value
+    public static class ASTAssignment implements ASTExp {
+        ASTVariable variable;
+        ASTExp expression;
+    }
+    
+    public static Parser<ASTAssignment> assignment() {
+        return variable().followedBy(terms.token("="))
+                .next(v -> expression().map(exp -> new ASTAssignment(v, exp)));
+    }
+    
+    public static Parser<String> identifier() {
+        return Terminals.Identifier.PARSER;
+    }
+    
+    @AllArgsConstructor @ToString
+    public static class ASTFuncCall implements ASTExp {
+        String name;
+        List<ASTExp> params;
+    }
+    
+    public static Parser<ASTFuncCall> funcCall() {
+        return identifier().next(id ->
+            expression().sepBy(terms.token(",")).between(terms.token("("), terms.token(")"))
+                .map(param -> new ASTFuncCall(id, param)));
+    }
+    
+    @Value
+    public static class ASTIf implements AST {
+        ASTExp expression;
+        List<AST> statements;
+    }
+    
+    public static Parser<ASTIf> ifStatement() {
+        return terms.token("if").next(t -> expression().between(terms.token("("), terms.token(")"))
+                .next(exp -> statements()
+                .map(statements -> new ASTIf(exp, statements))));
+    }
+    
+    public static Parser<AST> statement() {
+        return Parsers.or(Parsers.or(bicond(), command()).followedBy(terms.token(";")),
+                ifStatement());
+    }
+    
+    public static Parser<List<AST>> statements() {
+        return Parsers.or(
+                statement().map(s -> Arrays.asList(s)), 
+                statement().many().between(terms.token("{"), terms.token("}")));
+    }
+    @Value
+    public static class ASTFunction implements AST {
+        String name;
+        List<ASTVariable> params;
+        List<AST> statements;
+    }
+    
+    public static Parser<ASTFunction> function() {
+        return terms.token("function").next(identifier().next(
+                name -> variable().sepBy(terms.token(",")).between(terms.token("("), terms.token(")")).next(
+                params -> statement().many().between(terms.token("{"), terms.token("}")).map(st -> new ASTFunction(name, params, st)))));
+    }
+    
+    public static Parser<List<AST>> script() {
+        return Parsers.or(function(), statement()).many();
     }
 }
