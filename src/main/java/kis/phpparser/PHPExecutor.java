@@ -128,7 +128,7 @@ public class PHPExecutor {
         throw new RuntimeException("function should not invoke " + func.getName());
     }
     
-    public long visit(Context ctx, IntValue value) {
+    public double visit(Context ctx, IntValue value) {
         return value.getValue();
     }
     
@@ -157,7 +157,7 @@ public class PHPExecutor {
         if ("time".equals(value.getName())) {
             return System.currentTimeMillis() / 1000;
         } else if("microtime".equals(value.getName())) {
-            return System.currentTimeMillis();
+            return System.nanoTime() / 1000 / 1000000.;
         }
         
         ASTFunction function = ctx.findFunction(value.getName())
@@ -193,13 +193,13 @@ public class PHPExecutor {
         
         switch (value.getOp()) {
             case "+":
-                return (long)left + (long)right;
+                return (double)left + (double)right;
             case "-":
-                return (long)left - (long)right;
+                return (double)left - (double)right;
             case "<":
-                return (long)left < (long)right;
+                return (double)left < (double)right;
             case ">":
-                return (long)left > (long)right;
+                return (double)left > (double)right;
             default:
                 throw new RuntimeException("Unknown operator " + value.getOp());
         }

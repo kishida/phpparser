@@ -50,7 +50,7 @@ public class PHPParser {
 
     @Value
     public static class IntValue implements ASTExp {
-        long value;
+        double value;
 
         @Override
         public String toString() {
@@ -59,7 +59,7 @@ public class PHPParser {
     }
 
     public static Parser<IntValue> integer() {
-        return Terminals.IntegerLiteral.PARSER.map(s -> new IntValue(Long.parseLong(s)));
+        return Terminals.IntegerLiteral.PARSER.map(s -> new IntValue(Double.parseDouble(s)));
     }
 
     @Value
