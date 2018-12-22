@@ -2,9 +2,6 @@ package kis.phpparser;
 
 import java.util.Arrays;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import lombok.Value;
 import org.jparsec.*;
 import org.jparsec.pattern.CharPredicates;
@@ -48,12 +45,12 @@ public class PHPParser {
             Terminals.IntegerLiteral.TOKENIZER,
             Terminals.Identifier.TOKENIZER);
 
-    interface AST{}
-    interface ASTExp extends AST{}
+    public interface AST{}
+    public interface ASTExp extends AST{}
 
     @Value
     public static class IntValue implements ASTExp {
-        int value;
+        long value;
 
         @Override
         public String toString() {
@@ -62,7 +59,7 @@ public class PHPParser {
     }
 
     public static Parser<IntValue> integer() {
-        return Terminals.IntegerLiteral.PARSER.map(s -> new IntValue(Integer.parseInt(s)));
+        return Terminals.IntegerLiteral.PARSER.map(s -> new IntValue(Long.parseLong(s)));
     }
 
     @Value
@@ -95,7 +92,7 @@ public class PHPParser {
     public static Parser<ASTExp> bicond() {
         return operator().next(l ->
                 terms.token("<", ">").source()
-                     .next(op -> operator().map(r -> (ASTExp)new ASTBinaryOp(l, r, op))).optional(l));
+                     .next(op -> operator().map(r -> (ASTExp)new ASTBinaryOp(l, r, op.trim()))).optional(l));
     }
     public static Parser<ASTExp> expression() {
         return bicond();
@@ -125,7 +122,7 @@ public class PHPParser {
         return Terminals.Identifier.PARSER;
     }
     
-    @AllArgsConstructor @ToString
+    @Value
     public static class ASTFuncCall implements ASTExp {
         String name;
         List<ASTExp> params;
