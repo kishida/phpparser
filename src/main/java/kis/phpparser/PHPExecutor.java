@@ -103,7 +103,7 @@ public class PHPExecutor {
     }
     public Escape visit(Context ctx, ASTCommand command) {
         if ("echo".equals(command.getCommand())) {
-            System.out.print(visit(ctx, command.getParam()));
+            System.out.print(getString(visit(ctx, command.getParam())));
         } else if ("return".equals(command.getCommand())) {
             return new ReturnEscape(visit(ctx, command.getParam()));
         }
@@ -196,19 +196,50 @@ public class PHPExecutor {
         Object left = visit(ctx, value.getLeft());
         Object right = visit(ctx, value.getRight());
         
+        if (".".equals(value.getOp())) {
+            return getString(left) + getString(right);
+        }
+        
+        double leftNum = getNum(left);
+        double rightNum = getNum(right);
+        
         switch (value.getOp()) {
             case "+":
-                return (double)left + (double)right;
+                return leftNum + rightNum;
             case "-":
-                return (double)left - (double)right;
+                return leftNum - rightNum;
             case "<":
-                return (double)left < (double)right;
+                return leftNum < rightNum;
             case ">":
-                return (double)left > (double)right;
-            case ".":
-                return "" + left + right;
+                return leftNum > rightNum;
             default:
                 throw new RuntimeException("Unknown operator " + value.getOp());
         }
+    }
+    
+    private double getNum(Object o) {
+        if (o instanceof Double) {
+            return (double)o;
+        } else if (o instanceof String) {
+            return Double.parseDouble((String)o); // todo convert top if non-num follows
+        } else if (o instanceof Boolean) {
+            return (boolean)o ? 1 : 0;
+        }
+        throw new RuntimeException("unknown type " + o.getClass());
+    }
+    
+    private String getString(Object o) {
+        if (o instanceof String) {
+            return (String)o;
+        } else if (o instanceof Double) {
+            String s = o.toString();
+            if (s.endsWith(".0")) {
+                return s.substring(0, s.length() - 2);
+            }
+            return s;
+        } else if (o instanceof Boolean) {
+            return (boolean)o ? "1" : "";
+        }
+        throw new RuntimeException("unknown type " + o.getClass());
     }
 }

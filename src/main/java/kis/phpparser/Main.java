@@ -17,6 +17,7 @@ public class Main {
             "echo \"\\n\";\n" +
             "echo \"time:\".(microtime() - $start);\n" +
             "echo \"\\n\";\n" +
+            "echo \"12\".\"3\" + \"4\".\"56\";" +
             "";
     
     public static void main(String[] args) {
