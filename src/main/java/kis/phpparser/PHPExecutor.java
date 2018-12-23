@@ -103,7 +103,7 @@ public class PHPExecutor {
     }
     public Escape visit(Context ctx, ASTCommand command) {
         if ("echo".equals(command.getCommand())) {
-            System.out.println(visit(ctx, command.getParam()));
+            System.out.print(visit(ctx, command.getParam()));
         } else if ("return".equals(command.getCommand())) {
             return new ReturnEscape(visit(ctx, command.getParam()));
         }
