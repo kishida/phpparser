@@ -13,8 +13,8 @@ public class Main {
             "            return fib($n - 1) + fib($n - 2);\n" +
             "        }\n" +
             "        $start = microtime();\n" +
-            "        echo fib(31);\n" +
-            "        echo microtime() - $start;\n" +
+            "        echo \"fib:\".fib(31);\n" +
+            "        echo \"time:\".(microtime() - $start);\n" +
             "    ";
     
     public static void main(String[] args) {

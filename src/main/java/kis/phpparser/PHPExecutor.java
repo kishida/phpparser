@@ -131,6 +131,9 @@ public class PHPExecutor {
     public double visit(Context ctx, IntValue value) {
         return value.getValue();
     }
+    public String visit(Context ctx, StringValue value) {
+        return value.getValue();
+    }
     
     public Object visit(Context ctx, ASTExp value) {
         if (value instanceof ASTBinaryOp) {
@@ -143,6 +146,8 @@ public class PHPExecutor {
             return visit(ctx, (ASTAssignment)value);
         } else if (value instanceof ASTVariable) {
             return visit(ctx, (ASTVariable)value);
+        } else if (value instanceof StringValue) {
+            return visit(ctx, (StringValue)value);
         }
         throw new RuntimeException("Unknown ast " + value);
     }
@@ -200,6 +205,8 @@ public class PHPExecutor {
                 return (double)left < (double)right;
             case ">":
                 return (double)left > (double)right;
+            case ".":
+                return "" + left + right;
             default:
                 throw new RuntimeException("Unknown operator " + value.getOp());
         }

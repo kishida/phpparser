@@ -14,7 +14,7 @@ import org.jparsec.pattern.Patterns;
  */
 public class PHPParser {
     static String[] operators = {
-            "<", ">", "+", "-", "(", ")", ";", "=", ",", "{", "}", "="};
+            "<", ">", "+", "-", "(", ")", ";", "=", ",", "{", "}", "=","."};
     static String[] keywords = {
             "function", "return", "echo", "if"};
     static Terminals terms = Terminals.operators(operators).words(Scanners.IDENTIFIER).keywords(keywords).build();
@@ -41,6 +41,7 @@ public class PHPParser {
 
     static Parser<?> tokenizer = Parsers.or(
             terms.tokenizer(),
+            Terminals.StringLiteral.DOUBLE_QUOTE_TOKENIZER,
             VAR_TOKENIZER,
             Terminals.IntegerLiteral.TOKENIZER,
             Terminals.Identifier.TOKENIZER);
@@ -51,17 +52,21 @@ public class PHPParser {
     @Value
     public static class IntValue implements ASTExp {
         double value;
-
-        @Override
-        public String toString() {
-            return value + "";
-        }
     }
 
     public static Parser<IntValue> integer() {
         return Terminals.IntegerLiteral.PARSER.map(s -> new IntValue(Double.parseDouble(s)));
     }
 
+    @Value
+    public static class StringValue implements ASTExp {
+        String value;
+    }
+    
+    public static Parser<StringValue> string() {
+        return Terminals.StringLiteral.PARSER.map(StringValue::new);
+    }
+    
     @Value
     public static class ASTVariable implements ASTExp {
         String name;
@@ -72,7 +77,8 @@ public class PHPParser {
     }
 
     public static Parser<ASTExp> value() {
-        return Parsers.or(integer(), assignment(), variable(), funcCall());
+        return Parsers.or(integer(), assignment(), variable(), funcCall(), string(),
+                terms.token("(").next(pr -> expression().followedBy(terms.token(")"))));
     }
 
     @Value
@@ -84,6 +90,7 @@ public class PHPParser {
 
     public static Parser<ASTExp> operator() {
         return new OperatorTable<ASTExp>()
+                .infixl(terms.token(".").retn((l, r) -> new ASTBinaryOp(l, r, ".")), 10)
                 .infixl(terms.token("+").retn((l, r) -> new ASTBinaryOp(l, r, "+")), 10)
                 .infixl(terms.token("-").retn((l, r) -> new ASTBinaryOp(l, r, "-")), 10)
                 .build(value());
@@ -94,8 +101,15 @@ public class PHPParser {
                 terms.token("<", ">").source()
                      .next(op -> operator().map(r -> (ASTExp)new ASTBinaryOp(l, r, op.trim()))).optional(l));
     }
+    
+    public static Parser<ASTExp> concat() {
+        return bicond().next(l ->
+            terms.token(".").source()
+                .next(op -> bicond().map(r -> (ASTExp)new ASTBinaryOp(l, r, "."))).optional(l));
+    }
+    
     public static Parser<ASTExp> expression() {
-        return bicond();
+        return concat();
     }
     @Value
     public static class ASTCommand implements AST {
