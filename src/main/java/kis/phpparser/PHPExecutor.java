@@ -110,7 +110,7 @@ public class PHPExecutor {
         return Escape.getInstance();
     }
     public Escape visit(Context ctx, ASTIf ifSt) {
-        if (!(boolean)visit(ctx, ifSt.getExpression())) {
+        if (!getBoolean(visit(ctx, ifSt.getExpression()))) {
             return Escape.getInstance();
         }
         return visit(ctx.newContext(), ifSt.getStatements());
@@ -215,6 +215,20 @@ public class PHPExecutor {
             default:
                 throw new RuntimeException("Unknown operator " + value.getOp());
         }
+    }
+    
+    private boolean getBoolean(Object o) {
+        if (o == null) {
+            return false;
+        } else if (o instanceof Boolean) {
+            return (boolean)o;
+        } else if (o instanceof Double) {
+            return (double)o != 0;
+        } else if (o instanceof String) {
+            String s = o.toString();
+            return !s.isEmpty() && !"0".equals(s);
+        }
+        throw new RuntimeException("unknown type " + o.getClass());
     }
     
     private double getNum(Object o) {
