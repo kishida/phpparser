@@ -202,7 +202,7 @@ public class PHPExecutor {
         
         double leftNum = getNum(left);
         double rightNum = getNum(right);
-        
+
         switch (value.getOp()) {
             case "+":
                 return leftNum + rightNum;
@@ -235,7 +235,12 @@ public class PHPExecutor {
         if (o instanceof Double) {
             return (double)o;
         } else if (o instanceof String) {
-            return Double.parseDouble((String)o); // todo convert top if non-num follows
+            try {
+                return Double.parseDouble((String)o); // todo convert top if non-num follows
+            } catch (NumberFormatException ex) {
+                System.out.println("\nWarning: A non-numeric value encountered");
+                return 0.;
+            }
         } else if (o instanceof Boolean) {
             return (boolean)o ? 1 : 0;
         }
