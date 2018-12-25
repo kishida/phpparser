@@ -159,16 +159,22 @@ public class PHPExecutor {
     }
     
     public Object visit(Context ctx, ASTFuncCall value) {
-        if ("time".equals(value.getName())) {
-            return System.currentTimeMillis() / 1000;
-        } else if("microtime".equals(value.getName())) {
-            return System.nanoTime() / 1000 / 1000000.;
-        }
+        ASTFunction function;
+        if (value.getCache() == null) {
+            if ("time".equals(value.getName())) {
+                return System.currentTimeMillis() / 1000;
+            } else if("microtime".equals(value.getName())) {
+                return System.nanoTime() / 1000 / 1000000.;
+            }
         
-        ASTFunction function = ctx.findFunction(value.getName())
-                .orElseThrow(() -> new RuntimeException("function not found " + value.getName()));
-        if (function.getParams().size() != value.getParams().size()) {
-            throw new RuntimeException("Parameter count is not match for " + function.getName());
+            function = ctx.findFunction(value.getName())
+                    .orElseThrow(() -> new RuntimeException("function not found " + value.getName()));
+            if (function.getParams().size() != value.getParams().size()) {
+                throw new RuntimeException("Parameter count is not match for " + function.getName());
+            }
+            value.setCache(function);
+        } else {
+            function = value.getCache();
         }
         Context newCtx = ctx.newContext();
         for (int i = 0; i < function.getParams().size(); ++i) {

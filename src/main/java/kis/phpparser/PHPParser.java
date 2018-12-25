@@ -2,6 +2,9 @@ package kis.phpparser;
 
 import java.util.Arrays;
 import java.util.List;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.Value;
 import org.jparsec.*;
 import org.jparsec.pattern.CharPredicates;
@@ -136,10 +139,15 @@ public class PHPParser {
         return Terminals.Identifier.PARSER;
     }
     
-    @Value
+    @RequiredArgsConstructor
     public static class ASTFuncCall implements ASTExp {
-        String name;
-        List<ASTExp> params;
+        @Getter
+        final String name;
+        @Getter
+        final List<ASTExp> params;
+        @Setter
+        @Getter
+        ASTFunction cache = null;
     }
     
     public static Parser<ASTFuncCall> funcCall() {
