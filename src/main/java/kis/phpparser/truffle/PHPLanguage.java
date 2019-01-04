@@ -15,7 +15,7 @@ public class PHPLanguage extends TruffleLanguage<PHPContext>{
 
     @Override
     protected boolean isObjectOfLanguage(Object object) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return false;
     }
     
 }
