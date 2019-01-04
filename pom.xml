@@ -32,12 +32,12 @@
         <dependency>
             <groupId>org.graalvm.truffle</groupId>
             <artifactId>truffle-api</artifactId>
-            <version>1.0.0-rc9</version>
+            <version>1.0.0-rc10</version>
         </dependency>
         <dependency>
             <groupId>org.graalvm.truffle</groupId>
             <artifactId>truffle-dsl-processor</artifactId>
-            <version>1.0.0-rc9</version>
+            <version>1.0.0-rc10</version>
         </dependency>
     </dependencies>
     <build>
