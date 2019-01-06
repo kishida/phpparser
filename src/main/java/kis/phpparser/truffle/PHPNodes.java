@@ -15,7 +15,7 @@ import lombok.AllArgsConstructor;
  *
  * @author naoki
  */
-public class TrufllePHPNodes {
+public class PHPNodes {
     static class PHPRootNode extends RootNode {
         @Child PHPStatement body;
 
@@ -28,7 +28,7 @@ public class TrufllePHPNodes {
         @Override
         public Object execute(VirtualFrame frame) {
              body.executeVoid(frame);
-             return null;
+             return true;
         }
     }
     

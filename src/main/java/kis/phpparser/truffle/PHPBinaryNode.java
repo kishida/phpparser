@@ -10,7 +10,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
  */
 @NodeChild("leftNode")
 @NodeChild("rightNode")
-public abstract class PHPBinaryNode extends TrufllePHPNodes.PHPExpression {
+public abstract class PHPBinaryNode extends PHPNodes.PHPExpression {
     @NodeInfo(shortName = "+")
     public static abstract class PHPAddNode extends PHPBinaryNode {
         @Specialization

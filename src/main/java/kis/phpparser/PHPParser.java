@@ -194,4 +194,8 @@ public class PHPParser {
     public static Parser<List<AST>> script() {
         return Parsers.or(function(), statement()).many();
     }
+    
+    public static Parser<List<AST>> createParser() {
+        return script().from(tokenizer, ignored);
+    }
 }

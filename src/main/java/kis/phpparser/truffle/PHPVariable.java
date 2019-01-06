@@ -9,7 +9,7 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import kis.phpparser.truffle.TrufllePHPNodes.PHPExpression;
+import kis.phpparser.truffle.PHPNodes.PHPExpression;
 import lombok.AllArgsConstructor;
 
 /**
@@ -23,9 +23,9 @@ public abstract class PHPVariable { // can't make it an interface since APT can'
     public static abstract class PHPVariableRef extends PHPExpression{
         abstract FrameSlot getSlot();
 
-        @Specialization(guards = "isLong(vf)")
-        long readLong(VirtualFrame vf) {
-            return FrameUtil.getLongSafe(vf, getSlot());
+        @Specialization(guards = "isDouble(vf)")
+        double readDouble(VirtualFrame vf) {
+            return FrameUtil.getDoubleSafe(vf, getSlot());
         }
         
         @Specialization(guards = "isBoolean(vf)")
@@ -43,8 +43,8 @@ public abstract class PHPVariable { // can't make it an interface since APT can'
             return FrameUtil.getObjectSafe(vf, getSlot());
         }
         
-        boolean isLong(VirtualFrame frame) {
-            return frame.getFrameDescriptor().getFrameSlotKind(getSlot()) == FrameSlotKind.Long;
+        boolean isDouble(VirtualFrame frame) {
+            return frame.getFrameDescriptor().getFrameSlotKind(getSlot()) == FrameSlotKind.Double;
         }
 
         boolean isBoolean(VirtualFrame frame) {
@@ -56,14 +56,14 @@ public abstract class PHPVariable { // can't make it an interface since APT can'
     @NodeInfo(shortName = "assignment")
     @NodeChild(value = "valueNode")
     @NodeField(name = "slot", type = FrameSlot.class)
-    public static abstract class PHPVariableAssignment extends TrufllePHPNodes.PHPExpression {
+    public static abstract class PHPVariableAssignment extends PHPNodes.PHPExpression {
 
         protected abstract FrameSlot getSlot();
 
-        @Specialization(guards = "isLongKind(vf)")
-        long writeLong(VirtualFrame vf, long value) {
-            vf.getFrameDescriptor().setFrameSlotKind(getSlot(), FrameSlotKind.Long);
-            vf.setLong(getSlot(), value);
+        @Specialization(guards = "isDoubleKind(vf)")
+        double writeDouble(VirtualFrame vf, double value) {
+            vf.getFrameDescriptor().setFrameSlotKind(getSlot(), FrameSlotKind.Double);
+            vf.setDouble(getSlot(), value);
             return value;
         }
 
@@ -74,7 +74,7 @@ public abstract class PHPVariable { // can't make it an interface since APT can'
             return value;
         }
         
-        @Specialization(replaces = {"writeLong", "writeBoolean"})
+        @Specialization(replaces = {"writeDouble", "writeBoolean"})
         Object writeGeneric(VirtualFrame vf, Object value) {
             vf.getFrameDescriptor().setFrameSlotKind(getSlot(), FrameSlotKind.Object);
             vf.setObject(getSlot(), value);
@@ -82,14 +82,14 @@ public abstract class PHPVariable { // can't make it an interface since APT can'
         }
     
 
-        protected boolean isLongKind(VirtualFrame vf) {
+        protected boolean isDoubleKind(VirtualFrame vf) {
             FrameSlotKind kind = vf.getFrameDescriptor().getFrameSlotKind(getSlot());
-            return kind == FrameSlotKind.Long;
+            return kind == FrameSlotKind.Double || kind == FrameSlotKind.Illegal;
         }
 
         protected boolean isBooleanKind(VirtualFrame vf) {
             FrameSlotKind kind = vf.getFrameDescriptor().getFrameSlotKind(getSlot());
-            return kind == FrameSlotKind.Boolean;
+            return kind == FrameSlotKind.Boolean || kind == FrameSlotKind.Illegal;
         }
     }
 }

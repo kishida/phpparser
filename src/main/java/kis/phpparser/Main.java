@@ -4,7 +4,7 @@ import java.util.List;
 import org.jparsec.Parser;
 
 public class Main {
-    private final static String SAMPLE = 
+    public final static String SAMPLE = 
             //"<?php\n" +
             "function fib($n) {\n" +
             "    if ($n < 2) {\n" +
@@ -12,6 +12,7 @@ public class Main {
             "    }\n" +
             "    return fib($n - 1) + fib($n - 2);\n" +
             "}\n" +
+            "fib(31);fib(31);fib(31);fib(31);fib(31);" +
             "$start = microtime();\n" +
             "echo \"fib:\".fib(31);\n" +
             "echo \"\\n\";\n" +

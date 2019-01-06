@@ -10,9 +10,10 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import kis.phpparser.truffle.TrufllePHPNodes.PHPExpression;
-import kis.phpparser.truffle.TrufllePHPNodes.PHPStatement;
+import kis.phpparser.truffle.PHPNodes.PHPExpression;
+import kis.phpparser.truffle.PHPNodes.PHPStatement;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 /**
  *
@@ -20,12 +21,17 @@ import lombok.AllArgsConstructor;
  */
 public class PHPControlFlow {
     @NodeInfo(shortName = "if")
-    @AllArgsConstructor
     static class PHPIfNode extends PHPStatement {
         @Child private PHPExpression condition;
         @Child private PHPStatement thenStatement;
 
-        private ConditionProfile profile = ConditionProfile.createCountingProfile();
+        private final ConditionProfile profile = 
+                ConditionProfile.createCountingProfile();
+
+        public PHPIfNode(PHPExpression condition, PHPStatement thenStatement) {
+            this.condition = condition;
+            this.thenStatement = thenStatement;
+        }
         
         @Override
         void executeVoid(VirtualFrame virtualFrame) {

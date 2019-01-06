@@ -8,18 +8,18 @@ package kis.phpparser.truffle;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import kis.phpparser.truffle.TrufllePHPNodes.PHPExpression;
-import kis.phpparser.truffle.TrufllePHPNodes.PHPStatement;
+import kis.phpparser.truffle.PHPNodes.PHPExpression;
+import kis.phpparser.truffle.PHPNodes.PHPStatement;
 
 /**
  *
  * @author naoki
  */
-@NodeChild(value = "arguments", type=PHPExpression[].class)
-public abstract class PHPBuiltinNode extends PHPStatement {
+public abstract class PHPBuiltinNode {
     
     @NodeInfo(shortName = "echo")
-    abstract static class PHPEchoNode extends PHPBuiltinNode {
+    @NodeChild(value="param", type=PHPExpression.class)
+    public static abstract class PHPEchoNode extends PHPStatement {
         @Specialization
         void echo(double value) {
             System.out.print(value);
@@ -35,10 +35,9 @@ public abstract class PHPBuiltinNode extends PHPStatement {
     }
     
     @NodeInfo(shortName = "microtime")
-    @NodeChild(value="param", type=PHPExpression.class)
-    abstract static class PHPMicrotime extends PHPExpression {
+    public static abstract class PHPMicrotime extends PHPExpression {
         @Specialization
-        double microtime(double param) {
+        double microtime() {
             return System.nanoTime() / 1000 / 1000000.;
         }
     }
