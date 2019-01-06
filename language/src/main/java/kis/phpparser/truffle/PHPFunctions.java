@@ -117,7 +117,7 @@ public class PHPFunctions {
             } catch (ReturnException ex) {
                 return ex.getResult();
             }
-            return null;
+            return false;
         }
     }
 }
