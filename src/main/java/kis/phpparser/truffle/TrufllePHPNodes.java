@@ -1,10 +1,13 @@
 
 package kis.phpparser.truffle;
 
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.TypeSystem;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import lombok.AllArgsConstructor;
 
@@ -13,6 +16,22 @@ import lombok.AllArgsConstructor;
  * @author naoki
  */
 public class TrufllePHPNodes {
+    static class PHPRootNode extends RootNode {
+        @Child PHPStatement body;
+
+        public PHPRootNode(TruffleLanguage<?> language, FrameDescriptor frameDescriptor,
+                PHPStatement body) {
+            super(language, frameDescriptor);
+            this.body = body;
+        }
+        
+        @Override
+        public Object execute(VirtualFrame frame) {
+             body.executeVoid(frame);
+             return null;
+        }
+    }
+    
     @NodeInfo(language = "TrufflePHP", description = "Base class for PHP")
     static abstract class PHPNode extends Node {
     }

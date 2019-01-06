@@ -20,7 +20,7 @@ public abstract class PHPVariable { // can't make it an interface since APT can'
     @NodeInfo(shortName = "variable")
     @NodeField(name = "slot", type = FrameSlot.class)
     @AllArgsConstructor
-    static abstract class PHPVariableRef extends PHPExpression{
+    public static abstract class PHPVariableRef extends PHPExpression{
         abstract FrameSlot getSlot();
 
         @Specialization(guards = "isLong(vf)")
@@ -56,7 +56,7 @@ public abstract class PHPVariable { // can't make it an interface since APT can'
     @NodeInfo(shortName = "assignment")
     @NodeChild(value = "valueNode")
     @NodeField(name = "slot", type = FrameSlot.class)
-    static abstract class PHPVariableAssignment extends TrufllePHPNodes.PHPExpression {
+    public static abstract class PHPVariableAssignment extends TrufllePHPNodes.PHPExpression {
 
         protected abstract FrameSlot getSlot();
 
