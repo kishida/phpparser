@@ -2,6 +2,7 @@ package kis.phpparser.truffle;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -9,7 +10,8 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ControlFlowException;
-import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
 import kis.phpparser.truffle.PHPControlFlow.PHPBlock;
@@ -60,22 +62,28 @@ public class PHPFunctions {
     static class PHPInvokeNode extends PHPExpression {
         FunctionObject function;
         @Children PHPExpression[] argValues;
-        IndirectCallNode callNode;
+        @CompilerDirectives.CompilationFinal DirectCallNode callNode;
 
         public PHPInvokeNode(FunctionObject function, PHPExpression[] argValues) {
             this.function = function;
             this.argValues = argValues;
-            callNode = Truffle.getRuntime().createIndirectCallNode();
+            //callNode = Truffle.getRuntime().createIndirectCallNode();
         }
 
         @Override
+        @ExplodeLoop
         Object executeGeneric(VirtualFrame virtualFrame) {
+            
             CompilerAsserts.compilationConstant(argValues.length);
             Object[] args = new Object[argValues.length];
             for (int i = 0; i < argValues.length; ++i) {
                 args[i] = argValues[i].executeGeneric(virtualFrame);
             }
-            return callNode.call(function.getTarget(), args);
+            if (callNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                callNode = Truffle.getRuntime().createDirectCallNode(function.getTarget());
+            }
+            return callNode.call(args);
         }
     }
     
