@@ -17,7 +17,7 @@ import org.jparsec.pattern.Patterns;
  */
 public class PHPParser {
     static String[] operators = {
-            "<", ">", "+", "-", "(", ")", ";", "=", ",", "{", "}", "=","."};
+            "<?php", "<", ">", "+", "-", "(", ")", ";", "=", ",", "{", "}", "=","."};
     static String[] keywords = {
             "function", "return", "echo", "if"};
     static Terminals terms = Terminals.operators(operators).words(Scanners.IDENTIFIER).keywords(keywords).build();
@@ -192,7 +192,7 @@ public class PHPParser {
     }
     
     public static Parser<List<AST>> script() {
-        return Parsers.or(function(), statement()).many();
+        return terms.token("<?php").next(Parsers.or(function(), statement()).many());
     }
     
     public static Parser<List<AST>> createParser() {

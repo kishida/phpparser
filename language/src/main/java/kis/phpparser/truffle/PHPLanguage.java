@@ -28,7 +28,7 @@ public class PHPLanguage extends TruffleLanguage<PHPContext>{
     @Override
     protected CallTarget parse(ParsingRequest request) throws Exception {
         Parser<List<PHPParser.AST>> parser = PHPParser.createParser();
-        List<PHPParser.AST> script = parser.parse(request.getSource().getCharacters());
+        List<PHPParser.AST> script = parser.parse(request.getSource().getReader());
         PHPTreeGenerater generator = new PHPTreeGenerater(this);
         FrameDescriptor frame = new FrameDescriptor();
         PHPStatement[] nodes = generator.visit(frame, script);

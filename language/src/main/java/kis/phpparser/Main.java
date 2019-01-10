@@ -1,11 +1,12 @@
 package kis.phpparser;
 
 import java.util.List;
+import kis.phpparser.truffle.PHPMain;
 import org.jparsec.Parser;
 
 public class Main {
     public final static String SAMPLE = 
-            //"<?php\n" +
+            "<?php\n" +
             "function fib($n) {\n" +
             "    if ($n < 2) {\n" +
             "        return $n;\n" +
@@ -25,8 +26,7 @@ public class Main {
     
     public static void main(String[] args) {
         PHPExecutor exec = new PHPExecutor();
-        Parser<List<PHPParser.AST>> parser = PHPParser.script()
-                .from(PHPParser.tokenizer, PHPParser.ignored);
+        Parser<List<PHPParser.AST>> parser = PHPParser.createParser();
         List<PHPParser.AST> script = parser.parse(SAMPLE);
         exec.visit(script);
     }

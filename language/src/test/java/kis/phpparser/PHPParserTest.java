@@ -8,7 +8,7 @@ import static org.junit.Assert.*;
 
 public class PHPParserTest {
     private final static String SAMPLE = 
-            //"        <?php\n" +
+            "        <?php\n" +
             "        function fib($n) {\n" +
             "            if ($n < 2) {\n" +
             "                return $n;\n" +
