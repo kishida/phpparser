@@ -3,6 +3,7 @@ package kis.phpparser.truffle;
 
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.TypeSystem;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -32,14 +33,15 @@ public class PHPNodes {
         }
     }
     
-    @NodeInfo(language = "TrufflePHP", description = "Base class for PHP")
-    static abstract class PHPNode extends Node {
-    }
-
     @TypeSystem({double.class, boolean.class, String.class})
     static abstract class PHPTypes {
     }
     
+    @NodeInfo(language = "TrufflePHP", description = "Base class for PHP")
+    @TypeSystemReference(PHPTypes.class)
+    static abstract class PHPNode extends Node {
+    }
+
     static abstract class PHPStatement extends PHPNode {
         abstract void executeVoid(VirtualFrame virtualFrame);
     }

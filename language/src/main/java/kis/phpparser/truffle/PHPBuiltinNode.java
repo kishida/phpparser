@@ -5,6 +5,7 @@
  */
 package kis.phpparser.truffle;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -22,14 +23,31 @@ public abstract class PHPBuiltinNode {
     public static abstract class PHPEchoNode extends PHPStatement {
         @Specialization
         void echo(double value) {
+            print(value);
+        }
+
+        @TruffleBoundary
+        private static void print(double value) {
             System.out.print(value);
         }
+        
         @Specialization
         void echo(boolean value) {
+            print(value);
+        }
+        
+        @TruffleBoundary
+        private static void print(boolean value) {
             System.out.print(value);
         }
+        
         @Specialization
         void echo(Object value) {
+            print(value);
+        }
+
+        @TruffleBoundary
+        private static void print(Object value) {
             System.out.print(value);
         }
     }
