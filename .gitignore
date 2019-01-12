@@ -1,2 +1,7 @@
 /language/target/
 /launcher/target/
+/ee-trufflephp
+/trufflephp
+/interpreter
+/fib.php
+/smallfib.php

@@ -62,12 +62,12 @@ public class PHPFunctions {
     static class PHPInvokeNode extends PHPExpression {
         FunctionObject function;
         @Children PHPExpression[] argValues;
-        @CompilerDirectives.CompilationFinal DirectCallNode callNode;
+        @CompilerDirectives.CompilationFinal
+        DirectCallNode callNode;
 
         public PHPInvokeNode(FunctionObject function, PHPExpression[] argValues) {
             this.function = function;
             this.argValues = argValues;
-            //callNode = Truffle.getRuntime().createIndirectCallNode();
         }
 
         @Override
