@@ -3,6 +3,7 @@ package kis.phpparser.truffle;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -12,6 +13,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
 import kis.phpparser.truffle.PHPControlFlow.PHPBlock;
@@ -39,7 +41,7 @@ public class PHPFunctions {
             }
             System.arraycopy(statements, 0, args, arguments.length, statements.length);
             target = Truffle.getRuntime().createCallTarget(
-                    new FunctionRootNode(lang, f, new FunctionBodyNode(new PHPBlock(args))));
+                    new FunctionRootNode(lang, f, new FunctionBodyNode(this, new PHPBlock(args))));
         }
     }
     
@@ -71,19 +73,30 @@ public class PHPFunctions {
         }
 
         @Override
-        @ExplodeLoop
         Object executeGeneric(VirtualFrame virtualFrame) {
-            
+            if (callNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                callNode = Truffle.getRuntime().createDirectCallNode(function.getTarget());
+            }
+
+            Object[] args = evalArgs(virtualFrame);
+            for(;;) {
+                try {
+                    return callNode.call(args);
+                } catch (RecursiveException rec) {
+                    args = rec.getArgs();
+                }
+            }
+        }
+        
+        @ExplodeLoop
+        Object[] evalArgs(VirtualFrame virtualFrame) {
             CompilerAsserts.compilationConstant(argValues.length);
             Object[] args = new Object[argValues.length];
             for (int i = 0; i < argValues.length; ++i) {
                 args[i] = argValues[i].executeGeneric(virtualFrame);
             }
-            if (callNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                callNode = Truffle.getRuntime().createDirectCallNode(function.getTarget());
-            }
-            return callNode.call(args);
+            return args;
         }
     }
     
@@ -102,20 +115,50 @@ public class PHPFunctions {
         Object result;
     }
     
+    @AllArgsConstructor @Getter
+    static class RecursiveException extends ControlFlowException {
+        Object[] args;
+    }
+    
     @NodeInfo(shortName = "return")
-    @AllArgsConstructor
     static class PHPReturnNode extends PHPStatement {
         @Child private PHPExpression result;
+        @CompilationFinal Boolean recursive;
+
+        public PHPReturnNode(PHPExpression result) {
+            this.result = result;
+        }
 
         @Override
         void executeVoid(VirtualFrame virtualFrame) {
-            Object value = result.executeGeneric(virtualFrame);
-            throw new ReturnException(value);
+            if (recursive == null) {
+                if (result instanceof PHPInvokeNode) {
+                    PHPInvokeNode invoke = (PHPInvokeNode) result;
+                    for (Node node = getParent(); node != null; node = node.getParent()) {
+                        if (node instanceof FunctionBodyNode) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            recursive = ((FunctionBodyNode)node).function == invoke.function;
+                            break;
+                        }
+                    }
+                }
+                if (recursive == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    recursive = false;
+                }
+            }
+            if (recursive) {
+                throw new RecursiveException(((PHPInvokeNode)result).evalArgs(virtualFrame));
+            } else {
+                Object value = result.executeGeneric(virtualFrame);
+                throw new ReturnException(value);
+            }
         }
     }
     
     @AllArgsConstructor
     static class FunctionBodyNode extends PHPExpression {
+        FunctionObject function;
         @Child private PHPStatement body;
 
         @Override
